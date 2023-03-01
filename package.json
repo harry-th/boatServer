@@ -1,0 +1,25 @@
+{
+  "name": "boat_server",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000b\u0000o\u0000a\u0000t\u0000S\u0000e\u0000r\u0000v\u0000e\u0000r\u0000\r\u0000 \u0000",
+  "main": "boatSinkCheck.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harry-th/boatServer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/harry-th/boatServer/issues"
+  },
+  "homepage": "https://github.com/harry-th/boatServer#readme",
+  "dependencies": {
+    "universal-cookie": "^4.0.4",
+    "uuid": "^9.0.0",
+    "ws": "^8.12.1"
+  }
+}
