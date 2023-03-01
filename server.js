@@ -18,7 +18,6 @@ const server = HttpsServer({
 })
 const wss = new WebSocketServer({ server });
 server.listen(8080)
-
 const groups = {} // {id:opponentid, opponentid:id}
 const games = {
     1: { disconnected: true, disconnectreason: "placement time ran out", winner: "harry", loser: "bilbo saggins", state: "finished" },
@@ -125,6 +124,7 @@ wss.on('listening', () => {
 wss.on('connection', (ws, req) => {
     const cookies = new Cookies(req.headers.cookie)
     let id = cookies?.get('user')?.id
+    console.log(id)
     wscodes[id] = ws
 
     ws.send(JSON.stringify({ games }))
