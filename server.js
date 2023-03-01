@@ -122,9 +122,9 @@ wss.on('listening', () => {
 //userdata[groups[your id]]
 // When a new websocket connection is established id:{ boatPlacements: message.boatPlacements, targets: message.targets, boardState: message.boardState }
 wss.on('connection', (ws, req) => {
+    console.log(req.headers)
     const cookies = new Cookies(req.headers.cookie)
     let id = cookies?.get('user')?.id
-    console.log(id)
     wscodes[id] = ws
 
     ws.send(JSON.stringify({ games }))
