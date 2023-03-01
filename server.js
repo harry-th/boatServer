@@ -17,6 +17,7 @@ const server = HttpsServer({
     key: fs.readFileSync('/etc/pki/tls/private/private.key.pem')
 })
 const wss = new WebSocketServer({ server });
+server.listen(8080)
 
 const groups = {} // {id:opponentid, opponentid:id}
 const games = {
