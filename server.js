@@ -12,12 +12,16 @@ const placementTimer = require('./placementTimer');
 const reconnectTimer = require('./reconnectTimer');
 const retaliation = require('./retaliation');
 
-const server = HttpsServer({
-    cert: fs.readFileSync('/etc/pki/tls/certs/domain.cert.pem'),
-    key: fs.readFileSync('/etc/pki/tls/private/private.key.pem')
-})
-const wss = new WebSocketServer({ server });
-server.listen(8080)
+// const server = HttpsServer({
+//     cert: fs.readFileSync('/etc/pki/tls/certs/domain.cert.pem'),
+//     key: fs.readFileSync('/etc/pki/tls/private/private.key.pem')
+// })
+// const wss = new WebSocketServer({ server });
+// server.listen(8080)
+
+const wss = new WebSocketServer({ port: 8080 });
+
+
 const groups = {} // {id:opponentid, opponentid:id}
 const games = {
     1: { disconnected: true, disconnectreason: "placement time ran out", winner: "harry", loser: "bilbo saggins", state: "finished" },
@@ -118,29 +122,45 @@ wss.on('listening', () => {
     const { address, port } = wss.address()
     console.log(`server listening on ${address}:${port}`)
 });
+
+wss.on('connection', (ws) => {
+    const cookieHandler = (data) => {
+        let id = JSON.parse(data)?.user?.id;
+
+        // cookie data was received
+        console.log('userinfo', userInfo[id], 'data', JSON.parse(data)?.user?.id)
+        if (!userInfo[id]) {
+            do { id = uuid.v4() } while (groups.hasOwnProperty(id));
+            userInfo[id] = {}  // placeholder
+
+            console.log('new user', id);
+
+            ws.send(JSON.stringify({
+                cookies: {
+                    'user': { id, state: 'prematching' }
+                }
+            }));
+        }
+
+
+        wss.emit('genuine connection', ws, id);
+    }
+
+    ws.once('message', cookieHandler);
+});
+
 // id:(their id) : groups
 //userdata[groups[your id]]
 // When a new websocket connection is established id:{ boatPlacements: message.boatPlacements, targets: message.targets, boardState: message.boardState }
-wss.on('connection', (ws, req) => {
-    console.log(req.headers)
-    const cookies = new Cookies(req.headers.cookie)
-    let id = cookies?.get('user')?.id
+wss.on('genuine connection', (ws, id) => {
+
     wscodes[id] = ws
 
     ws.send(JSON.stringify({ games }))
-    // create new user
-    if (!userInfo[id]) {
-        // generate a unique user id
-        do { id = uuid.v4() } while (groups.hasOwnProperty(id))
 
-        userInfo[id] = {}  // placeholder
-        ws.send(JSON.stringify({
-            cookies: {
-                'user': { id, state: 'prematching' }
-            }
-        }))
-        console.log('new user:', id)
-    } else if (games[userInfo[id]?.currentGame]?.state === 'ongoing') {
+
+    // create new user
+    if (games[userInfo[id]?.currentGame]?.state === 'ongoing') {
         clearTimeout(userInfo[id].disconnectTimerCode)
         delete userInfo[id].disconnectTimerCode
         let time, playerTimer, enemyTimer
@@ -226,12 +246,16 @@ wss.on('connection', (ws, req) => {
                     wscodes[groups[id]].send(JSON.stringify({ for: 'player', win: true, hasDisconnected: true, hasLeft: true }))
                     delete userData[groups[id]]
                     delete userData[id]
+                    delete groups[groups[id]]
+                    delete groups[id]
                 }, 60000)
             }
         } else if (games[userInfo[id]?.currentGame]?.state === 'placement') {
             if (userData[id]?.timer?.code) userData[id].timer.remaining = userData[id].timer.time - Date.now()
         } else if (games[userInfo[id].currentGame]?.state === 'finished') {
             if (wscodes[groups[id]]) wscodes[groups[id]].send(JSON.stringify({ issue: 'disconnect' }))
+            delete groups[groups[id]]
+            delete groups[id]
         }
     })
 
@@ -461,6 +485,7 @@ wss.on('connection', (ws, req) => {
             }
         }
         if (message.state === 'matching') {
+            if (groups[id]) console.log('id present  ' + groups[id])
             if ((!groups.hasOwnProperty(id) || message.character !== userInfo[id].character) && !message.privacy) {
                 findGroup({ groups, id: id, name: message.name, character: message.character, boatnames: message.boatNames })
             } else if (message.privacy) { // code based matching
