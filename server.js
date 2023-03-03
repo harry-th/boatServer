@@ -270,12 +270,6 @@ wss.on('genuine connection', (ws, id) => {
                         else if (message.shootline && (index[1] - index[0] !== 1 && index[1] - index[0] !== 10)) return
                         else if (message.twoShot && !playerdata.twoShots) return
 
-                        if (message.twoShot) index = playerdata.twoShots
-
-                        if (message.twoShot || message.shootline) {
-                            playerdata.charges -= 1
-                            playerModifier = { ...playerModifier, charges: playerdata.charges }
-                        }
                     }
                     if (playerinfo.character === 'orangeman') {
                         if (message.retaliation && playerdata.bluffing !== 'ready') return // prevents using ability if not in the proper state
@@ -283,7 +277,14 @@ wss.on('genuine connection', (ws, id) => {
                     let { playerModifier, enemyModifier } = genericTurnAction({ id, userInfo, games, wscodes, groups, userData })
                     const { bluffing } = message
                     let shotresults = { missed: [], hit: [] }
-                    if (playerinfo.character === 'orangeman') {
+                    if (playerinfo.character === 'lineman') {
+
+                        if (message.twoShot) index = playerdata.twoShots
+                        if (message.twoShot || message.shootline) {
+                            playerdata.charges -= 1
+                            playerModifier = { ...playerModifier, charges: playerdata.charges }
+                        }
+                    } else if (playerinfo.character === 'orangeman') {
                         const { bluffing, orange } = message
                         enemyModifier = { ...enemyModifier, ...(orange && { orange }) }
                         playerModifier = { ...playerModifier, ...(orange && { orange }) }
