@@ -104,8 +104,8 @@ const findGroup = ({ groups, id, name, character, boatnames }) => {
         groups[id] = matchID
         let playerinfo = userInfo[id]
         let enemyinfo = userInfo[groups[id]]
-        wscodes[id].send(JSON.stringify({ matched: true, character: enemyinfo.character, enemyinfo, time: 60 }))
-        wscodes[groups[id]].send(JSON.stringify({ matched: true, enemyinfo: playerinfo, time: 60 }))
+        wscodes[id].send(JSON.stringify({ matched: true, character: playerinfo.character, enemyinfo, time: 60 }))
+        wscodes[groups[id]].send(JSON.stringify({ matched: true, character: enemyinfo.character, enemyinfo: playerinfo, time: 60 }))
         const gameId = uuid.v4()
         games[gameId] = { state: 'placement', players: [id, groups[id]], player1: playerinfo.name, player2: enemyinfo.name, player1character: playerinfo.character, player2character: enemyinfo.character }
         playerinfo.currentGame = gameId
