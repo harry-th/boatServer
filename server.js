@@ -104,7 +104,7 @@ const findGroup = ({ groups, id, name, character, boatnames }) => {
         groups[id] = matchID
         let playerinfo = userInfo[id]
         let enemyinfo = userInfo[groups[id]]
-        wscodes[id].send(JSON.stringify({ matched: true, enemyinfo, time: 60 }))
+        wscodes[id].send(JSON.stringify({ matched: true, character: enemyinfo.character, enemyinfo, time: 60 }))
         wscodes[groups[id]].send(JSON.stringify({ matched: true, enemyinfo: playerinfo, time: 60 }))
         const gameId = uuid.v4()
         games[gameId] = { state: 'placement', players: [id, groups[id]], player1: playerinfo.name, player2: enemyinfo.name, player1character: playerinfo.character, player2character: enemyinfo.character }
@@ -309,6 +309,13 @@ wss.on('genuine connection', (ws, id) => {
                         if ((message.twoShot || message.shootline) && playerdata.charges < 1) return // this and the line below prevent illegal behavior
                         else if (message.shootline && (index[1] - index[0] !== 1 && index[1] - index[0] !== 10)) return
                         else if (message.twoShot && !playerdata.twoShots) return
+
+                        if (message.twoShot) index = playerdata.twoShots
+
+                        if (message.twoShot || message.shootline) {
+                            playerdata.charges -= 1
+                            playerModifier = { ...playerModifier, charges: playerdata.charges }
+                        }
                     }
                     if (playerinfo.character === 'orangeman') {
                         if (message.retaliation && playerdata.bluffing !== 'ready') return // prevents using ability if not in the proper state
@@ -316,14 +323,7 @@ wss.on('genuine connection', (ws, id) => {
                     let { playerModifier, enemyModifier } = genericTurnAction({ id, userInfo, games, wscodes, groups, userData })
                     const { bluffing } = message
                     let shotresults = { missed: [], hit: [] }
-                    if (playerinfo.character === 'lineman') {
-                        if (message.twoShot && playerdata.charges) index = playerdata.twoShots
-
-                        if (message.twoShot || message.shootline) {
-                            playerdata.charges -= 1
-                            playerModifier = { ...playerModifier, charges: playerdata.charges }
-                        }
-                    } else if (playerinfo.character === 'orangeman') {
+                    if (playerinfo.character === 'orangeman') {
                         const { bluffing, orange } = message
                         enemyModifier = { ...enemyModifier, ...(orange && { orange }) }
                         playerModifier = { ...playerModifier, ...(orange && { orange }) }
